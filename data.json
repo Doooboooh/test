@@ -1,29 +1,18 @@
 {
-  "last_updated": "2024-05-20",
-  "leaderboard": [
+  "last_updated": "2026-04-13",
+  "tasks": [
     {
-      "task_id": "T001",
-      "task_name": "Sparse Matrix-Vector Multiplication (SpMV)",
-      "top_team": "AlphaMiner",
-      "github_handle": "alphaminer_dev",
-      "score": 98.45,
-      "unit": "TFLOPS"
-    },
-    {
-      "task_id": "T002",
-      "task_name": "Large Language Model Inference (LLM-7B)",
-      "top_team": "DeepCuda",
-      "github_handle": "deepcuda_research",
-      "score": 1240.2,
-      "unit": "tokens/sec"
-    },
-    {
-      "task_id": "T003",
-      "task_name": "Graph Traversal (BFS)",
-      "top_team": "GraphMaster",
-      "github_handle": "g_master88",
-      "score": 85.12,
-      "unit": "GTEPS"
+      "id": "T001",
+      "name": "001_attention_softmax_dropout_value_matmul_backward",
+      "description": {
+        "input": "Tensor A [Batch, Head, Seq, Dim], Tensor B [Batch, Head, Seq, Dim]",
+        "output": "Gradient Tensor d_A, d_B",
+        "workload": "Backward pass of scaled dot-product attention mechanism."
+      },
+      "reference_implementation": "template <typename T>\n__global__ void attention_kernel(T* out, const T* q, const T* k, const T* v) {\n    // CUDA Implementation here...\n    int idx = blockIdx.x * blockDim.x + threadIdx.x;\n    // ... 更多代码\n}",
+      "results": [
+        {"rank": 1, "user": "Rogue Pegasus", "github": "rogue_p", "score": 0.633370, "latency": "0.512ms", "date": "2026-03-26"}
+      ]
     }
   ]
 }

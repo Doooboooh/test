@@ -3,88 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaderboard | SOL-ExecBench Clone</title>
+    <title>SOL-ExecBench | High Performance Leaderboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .gradient-border {
-            border-bottom: 2px solid;
-            border-image: linear-gradient(to right, #76b900, #34d399) 1;
-        }
+        .nav-link { @apply px-4 py-2 text-gray-600 hover:text-green-600 font-medium transition-colors; }
+        .card { @apply bg-white border border-gray-200 rounded-lg shadow-sm; }
+        pre { @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto font-mono text-sm leading-relaxed; }
+        code { font-family: 'Fira Code', monospace; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans leading-normal">
+<body class="bg-gray-50 text-gray-900">
 
-    <header class="bg-white shadow-sm py-8 mb-10">
-        <div class="max-w-5xl mx-auto px-4">
-            <h1 class="text-3xl font-bold text-gray-800 tracking-tight">SOL-ExecBench <span class="text-green-600">Leaderboard</span></h1>
-            <p class="mt-2 text-gray-600">Performance results for high-performance computing tasks.</p>
-            <p id="update-time" class="text-sm text-gray-400 mt-1">Last updated: --</p>
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-4 flex items-center justify-between h-16">
+            <div class="flex items-center gap-8">
+                <a href="#" onclick="showView('leaderboard')" class="text-xl font-bold tracking-tighter">SOL-Exec<span class="text-green-600">Bench</span></a>
+                <div class="hidden md:flex gap-4">
+                    <a href="javascript:void(0)" onclick="showView('problems')" class="nav-link">Problems</a>
+                    <a href="javascript:void(0)" onclick="showView('leaderboard')" class="nav-link">Leaderboard</a>
+                </div>
+            </div>
+            <div id="update-ts" class="text-xs text-gray-400 font-mono"></div>
         </div>
-    </header>
+    </nav>
 
-    <main class="max-w-5xl mx-auto px-4">
-        <div class="bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200">
-            <table class="min-w-full divide-y divide-gray-200 text-left">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Task Name</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Top Performer (GitHub)</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Best Score</th>
-                    </tr>
-                </thead>
-                <tbody id="leaderboard-body" class="divide-y divide-gray-200">
-                    <tr>
-                        <td colspan="3" class="px-6 py-10 text-center text-gray-400">Loading data...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <section id="view-leaderboard" class="view-content">
+            <h2 class="text-2xl font-bold mb-6">Global Leaderboard</h2>
+            <div class="card overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase">Task Name</th>
+                            <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase">Top Performer</th>
+                            <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase text-right">Best Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="global-lb-body" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="view-problems" class="view-content hidden">
+            <h2 class="text-2xl font-bold mb-6">Problems</h2>
+            <div class="grid gap-4" id="problem-list"></div>
+        </section>
+
+        <section id="view-task-detail" class="view-content hidden">
+            <div id="task-detail-content"></div>
+        </section>
     </main>
 
-    <footer class="max-w-5xl mx-auto px-4 py-10 text-center text-gray-400 text-sm">
-        &copy; 2024 Your Project Name. Hosted on GitLab Pages.
-    </footer>
-
     <script>
-        // 异步加载数据
-        async function loadLeaderboard() {
-            try {
-                // 读取同目录下的 data.json
-                const response = await fetch('./data.json');
-                const data = await response.json();
-                
-                const tableBody = document.getElementById('leaderboard-body');
-                const updateTime = document.getElementById('update-time');
-                
-                updateTime.innerText = `Last updated: ${data.last_updated}`;
-                tableBody.innerHTML = ''; // 清空加载提示
+        let db = { tasks: [] };
 
-                data.leaderboard.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.className = "hover:bg-green-50 transition-colors";
-                    
-                    row.innerHTML = `
-                        <td class="px-6 py-4 font-medium text-gray-800">${item.task_name}</td>
-                        <td class="px-6 py-4">
-                            <a href="https://github.com/${item.github_handle}" target="_blank" class="flex items-center text-blue-600 hover:underline">
-                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                                @${item.github_handle}
-                            </a>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <span class="font-mono font-bold text-gray-900">${item.score}</span>
-                            <span class="text-xs text-gray-500 ml-1">${item.unit}</span>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            } catch (error) {
-                console.error("Error loading data:", error);
-                document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="3" class="text-center py-10 text-red-500">Failed to load data. Please check data.json.</td></tr>';
-            }
+        async function init() {
+            try {
+                const res = await fetch('./data.json');
+                db = await res.json();
+                document.getElementById('update-ts').innerText = `Last Update: ${db.last_updated}`;
+                renderGlobalLeaderboard();
+                renderProblemList();
+                const params = new URLSearchParams(window.location.search);
+                const taskId = params.get('task');
+                if (taskId) showTaskDetail(taskId);
+            } catch (e) { console.error("Data load error", e); }
         }
 
-        window.onload = loadLeaderboard;
+        function showView(viewId) {
+            document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            if(viewId !== 'task-detail') window.history.pushState({}, '', window.location.pathname);
+        }
+
+        function renderGlobalLeaderboard() {
+            const container = document.getElementById('global-lb-body');
+            container.innerHTML = db.tasks.map(task => {
+                const top = task.results[0] || { user: 'N/A', github: '', score: '-' };
+                return `
+                    <tr class="hover:bg-green-50 cursor-pointer" onclick="showTaskDetail('${task.id}', 'leaderboard')">
+                        <td class="px-6 py-4 font-medium text-green-700">${task.name}</td>
+                        <td class="px-6 py-4 text-sm">@${top.github}</td>
+                        <td class="px-6 py-4 text-right font-mono font-bold">${top.score}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderProblemList() {
+            const container = document.getElementById('problem-list');
+            container.innerHTML = db.tasks.map(task => `
+                <div class="card p-6 hover:border-green-400 cursor-pointer" onclick="showTaskDetail('${task.id}')">
+                    <h3 class="text-lg font-bold">${task.name}</h3>
+                    <p class="text-gray-500 text-sm mt-1">${task.description.workload}</p>
+                </div>
+            `).join('');
+        }
+
+        function showTaskDetail(taskId, subView = 'info') {
+            const task = db.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            showView('task-detail');
+            window.history.pushState({}, '', `?task=${taskId}`);
+
+            const content = document.getElementById('task-detail-content');
+            content.innerHTML = `
+                <nav class="flex gap-2 text-sm text-gray-500 mb-4">
+                    <a href="javascript:void(0)" onclick="showView('leaderboard')" class="hover:text-green-600">Leaderboard</a>
+                    <span>/</span><span class="text-gray-900">${task.name}</span>
+                </nav>
+                
+                <h1 class="text-3xl font-bold mb-8 hover:text-green-600 cursor-pointer" onclick="showTaskDetail('${task.id}', 'info')">${task.name}</h1>
+
+                <div class="flex gap-6 border-b mb-8">
+                    <button onclick="toggleSubView('info')" id="btn-info" class="pb-2 border-b-2 ${subView==='info'?'border-green-600 text-green-600':'border-transparent'}">Description</button>
+                    <button onclick="toggleSubView('lb')" id="btn-lb" class="pb-2 border-b-2 ${subView==='leaderboard'?'border-green-600 text-green-600':'border-transparent'}">Leaderboard</button>
+                </div>
+
+                <div id="sub-info" class="${subView==='info'?'':'hidden'} space-y-8">
+                    <div class="card p-6">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Description</h4>
+                        <div class="grid md:grid-cols-2 gap-4 mb-6">
+                            <div><p class="text-xs font-bold text-gray-500">INPUT</p><code class="text-sm block bg-gray-100 p-2 mt-1 rounded">${task.description.input}</code></div>
+                            <div><p class="text-xs font-bold text-gray-500">OUTPUT</p><code class="text-sm block bg-gray-100 p-2 mt-1 rounded">${task.description.output}</code></div>
+                        </div>
+                        <p class="text-xs font-bold text-gray-500">WORKLOAD</p>
+                        <p class="mt-1 text-gray-700">${task.description.workload}</p>
+                    </div>
+
+                    <div class="card p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Reference Implementation</h4>
+                            <button onclick="copyCode()" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded">Copy Code</button>
+                        </div>
+                        <pre><code id="code-block">${escapeHtml(task.reference_implementation)}</code></pre>
+                    </div>
+                </div>
+
+                <div id="sub-lb" class="${subView==='leaderboard'?'':'hidden'}">
+                    <div class="card overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 text-xs font-bold text-gray-500 uppercase">
+                                <tr><th class="px-6 py-3">Rank</th><th class="px-6 py-3">User</th><th class="px-6 py-3">Score</th><th class="px-6 py-3">Latency</th><th class="px-6 py-3">Date</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                ${task.results.map(r => `
+                                    <tr>
+                                        <td class="px-6 py-4 font-bold text-gray-400">#${r.rank}</td>
+                                        <td class="px-6 py-4 text-blue-600 font-medium">@${r.github}</td>
+                                        <td class="px-6 py-4 font-mono font-bold">${r.score}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">${r.latency}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-400">${r.date}</td>
+                                    </tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function copyCode() {
+            const code = document.getElementById('code-block').textContent;
+            navigator.clipboard.writeText(code).then(() => alert('Code copied!'));
+        }
+
+        function toggleSubView(type) {
+            const isInfo = type === 'info';
+            document.getElementById('sub-info').classList.toggle('hidden', !isInfo);
+            document.getElementById('sub-lb').classList.toggle('hidden', isInfo);
+            document.getElementById('btn-info').className = `pb-2 border-b-2 ${isInfo?'border-green-600 text-green-600':'border-transparent'}`;
+            document.getElementById('btn-lb').className = `pb-2 border-b-2 ${!isInfo?'border-green-600 text-green-600':'border-transparent'}`;
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
