@@ -1,0 +1,29 @@
+{
+  "last_updated": "2024-05-20",
+  "leaderboard": [
+    {
+      "task_id": "T001",
+      "task_name": "Sparse Matrix-Vector Multiplication (SpMV)",
+      "top_team": "AlphaMiner",
+      "github_handle": "alphaminer_dev",
+      "score": 98.45,
+      "unit": "TFLOPS"
+    },
+    {
+      "task_id": "T002",
+      "task_name": "Large Language Model Inference (LLM-7B)",
+      "top_team": "DeepCuda",
+      "github_handle": "deepcuda_research",
+      "score": 1240.2,
+      "unit": "tokens/sec"
+    },
+    {
+      "task_id": "T003",
+      "task_name": "Graph Traversal (BFS)",
+      "top_team": "GraphMaster",
+      "github_handle": "g_master88",
+      "score": 85.12,
+      "unit": "GTEPS"
+    }
+  ]
+}
