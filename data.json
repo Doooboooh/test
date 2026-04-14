@@ -1,5 +1,19 @@
 {
   "last_updated": "2026-04-13",
+  "competition_info": {
+    "name": "OpenOperator Challenge 2026",
+    "description": "旨在推动算子库性能极限的开发者竞技场，专注于高并发、低延迟的计算算子优化。",
+    "contact": "Email: contact@openoperator.org | GitHub: github.com/openoperator"
+  },
+  "timeline": [
+    { "date": "2026-03-01", "event": "比赛正式开启，发布首批 5 道题目" },
+    { "date": "2026-04-15", "event": "中期排名公布及技术分享会" },
+    { "date": "2026-05-30", "event": "榜单锁定，进入代码审核阶段" }
+  ],
+  "notices": [
+    { "date": "2026-04-10", "title": "算子环境升级公告", "content": "评测机驱动已更新至 CUDA 12.4，请开发者注意兼容性。" },
+    { "date": "2026-03-15", "title": "新题目上线", "content": "T006 - T008 已经加入 Problems 列表。" }
+  ],
   "tasks": [
     {
       "id": "T001",
@@ -33,7 +47,7 @@
       },
       "reference_implementation": "__global__ void fused_conv2d_relu_kernel(half* input, half* weight) {\n    // Use mma.sync for tensor core acceleration\n    // ... convolution logic ...\n}",
       "results": [
-        {"rank": 1, "user": "CloudRunner", "github": "cloud_runner", "score": 1.250000, "latency": "0.052ms", "date": "2026-04-05"},
+        {"rank": 1, "user": "CloudRunner", "github": "bluewhale_ai", "score": 1.250000, "latency": "0.052ms", "date": "2026-04-05"},
         {"rank": 2, "user": "Nvidia_Fan", "github": "cuda_guru", "score": 1.210452, "latency": "0.054ms", "date": "2026-04-04"},
         {"rank": 3, "user": "DeepCuda", "github": "deepcuda", "score": 1.189921, "latency": "0.056ms", "date": "2026-04-01"},
         {"rank": 4, "user": "AILab_Research", "github": "ai_lab", "score": 1.152201, "latency": "0.059ms", "date": "2026-03-28"},

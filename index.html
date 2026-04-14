@@ -6,58 +6,141 @@
     <title>OpenOperator | High Performance Leaderboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 定义导航栏链接的基础样式和激活状态样式 */
-        .nav-link { @apply px-4 py-2 text-gray-600 hover:text-blue-600 font-medium transition-colors; }
-        .nav-active { @apply text-blue-600 border-b-2 border-blue-600; }
-        
-        /* 通用卡片样式 */
+        .nav-link { @apply px-4 py-2 text-gray-500 hover:text-blue-600 font-medium transition-colors border-b-2 border-transparent; }
+        .nav-active { @apply text-blue-600 border-blue-600; }
         .card { @apply bg-white border border-gray-200 rounded-lg shadow-sm; }
-        
-        /* 代码块样式：保持深色背景以提高可读性，适合程序员习惯 */
         pre { @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto font-mono text-sm leading-relaxed; }
         code { font-family: 'Fira Code', monospace; }
-        
-        /* 强制覆盖 Tailwind 默认的 focus 环颜色为蓝色 */
-        :focus { outline: 2px solid transparent; outline-offset: 2px; --tw-ring-inset: var(--tw-empty,/*!*/ /*!*/); --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: #2563eb; --tw-ring-opacity: 0.5; box-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color); }
+        :focus { outline: 2px solid #2563eb; outline-offset: 2px; }
+        .stat-value { @apply text-2xl font-bold text-blue-600 font-mono; }
+        .stat-label { @apply text-xs text-gray-400 uppercase font-bold tracking-wider; }
+        /* 自定义滚动条样式 */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
 
-    <nav class="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 flex items-center justify-between h-16">
             <div class="flex items-center gap-8">
-                <a href="#" onclick="showView('leaderboard')" class="text-xl font-bold tracking-tighter">Open<span class="text-blue-600">Operator</span></a>
-                <div class="hidden md:flex gap-4">
-                    <a href="javascript:void(0)" onclick="showView('problems')" class="nav-link">Problems</a>
-                    <a href="javascript:void(0)" onclick="showView('leaderboard')" class="nav-link nav-active" id="nav-lb">Leaderboard</a>
+                <a href="javascript:void(0)" onclick="showView('home')" class="text-xl font-bold tracking-tighter italic">Open<span class="text-blue-600">Operator</span></a>
+                <div class="hidden md:flex gap-2">
+                    <a href="javascript:void(0)" onclick="showView('problems')" class="nav-link" id="nav-problems">Problems</a>
+                    <a href="javascript:void(0)" onclick="showView('leaderboard')" class="nav-link" id="nav-leaderboard">Leaderboard</a>
+                    <a href="javascript:void(0)" onclick="showView('notice')" class="nav-link" id="nav-notice">Notice</a>
                 </div>
             </div>
-            <div id="update-ts" class="text-xs text-gray-400 font-mono"></div>
+            <div id="update-ts" class="text-[10px] text-gray-400 font-mono uppercase"></div>
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto px-4 py-8">
+    <main class="max-w-6xl mx-auto px-4 py-8 min-h-[70vh]">
         
-        <section id="view-leaderboard" class="view-content">
-            <h2 class="text-2xl font-bold mb-6">Global Leaderboard</h2>
-            <div class="card overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase">Task Name</th>
-                            <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase">Top Performer</th>
-                            <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase text-right">Best Score</th>
-                        </tr>
-                    </thead>
-                    <tbody id="global-lb-body" class="divide-y divide-gray-100">
-                        </tbody>
-                </table>
+        <section id="view-home" class="view-content hidden">
+            <div class="max-w-4xl mx-auto py-10">
+                <div class="text-center mb-16">
+                    <h1 class="text-5xl font-extrabold text-gray-900 mb-6 tracking-tight" id="home-title">Loading...</h1>
+                    <p class="text-xl text-gray-600 leading-relaxed" id="home-desc"></p>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+                    <div class="relative overflow-hidden bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-blue-50 rounded-full opacity-50"></div>
+                        <p class="text-xs font-black text-blue-600 uppercase tracking-widest mb-2 relative">Active Tasks</p>
+                        <p class="text-5xl font-black text-gray-900 tracking-tighter relative" id="stat-tasks">0</p>
+                        <p class="text-gray-400 text-xs mt-2 relative">挑战题目总数</p>
+                    </div>
+
+                    <div class="relative overflow-hidden bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-indigo-50 rounded-full opacity-50"></div>
+                        <p class="text-xs font-black text-indigo-600 uppercase tracking-widest mb-2 relative">Participants</p>
+                        <p class="text-5xl font-black text-gray-900 tracking-tighter relative" id="stat-users">0</p>
+                        <p class="text-gray-400 text-xs mt-2 relative">全球参赛选手</p>
+                    </div>
+
+                    <div class="relative overflow-hidden bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-emerald-50 rounded-full opacity-50"></div>
+                        <p class="text-xs font-black text-emerald-600 uppercase tracking-widest mb-2 relative">Submissions</p>
+                        <p class="text-5xl font-black text-gray-900 tracking-tighter relative" id="stat-subs">0</p>
+                        <p class="text-gray-400 text-xs mt-2 relative">总提交记录数</p>
+                    </div>
+
+                    <div class="relative overflow-hidden bg-blue-600 p-8 rounded-2xl shadow-lg shadow-blue-100">
+                        <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                        <p class="text-xs font-black text-blue-100 uppercase tracking-widest mb-2 relative">Platform Status</p>
+                        <p class="text-4xl font-black text-white tracking-tighter relative flex items-center gap-2" id="stat-status">
+                            LIVE <span class="relative inline-flex rounded-full h-3 w-3 bg-green-400"></span>
+                        </p>
+                        <p class="text-blue-100/80 text-xs mt-4 relative font-medium">竞赛火热进行中</p>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="card p-8">
+                        <h3 class="font-bold text-lg mb-6 flex items-center gap-2 border-b pb-4">
+                            <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span> Timeline
+                        </h3>
+                        <ul class="space-y-6" id="home-timeline"></ul>
+                    </div>
+                    <div class="card p-8">
+                        <h3 class="font-bold text-lg mb-6 flex items-center gap-2 border-b pb-4">
+                            <span class="w-1.5 h-6 bg-gray-400 rounded-full"></span> Contact & Resources
+                        </h3>
+                        <div class="text-gray-600 text-sm leading-loose whitespace-pre-wrap" id="home-contact"></div>
+                    </div>
+                </div>
             </div>
         </section>
 
         <section id="view-problems" class="view-content hidden">
-            <h2 class="text-2xl font-bold mb-6">Problems</h2>
-            <div class="grid gap-4" id="problem-list"></div>
+            <h2 class="text-2xl font-bold mb-8">Available Problems</h2>
+            <div class="grid gap-2" id="problem-list"></div>
+        </section>
+
+        <section id="view-leaderboard" class="view-content hidden">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold tracking-tight">Global Leaderboard</h2>
+                <p class="text-gray-500 text-sm mt-2">实时追踪全球选手的任务完成进度与排名</p>
+            </div>
+            
+            <div class="card w-full overflow-hidden flex flex-col mb-10">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
+                        <span class="text-xs font-black text-gray-600 uppercase tracking-widest">Team Domination</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input type="text" id="team-search" oninput="filterTeams()" placeholder="Search team..." 
+                            class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none w-48 md:w-64 transition-all">
+                    </div>
+                </div>
+                <div id="team-stats-list" class="h-[450px] overflow-y-auto custom-scrollbar divide-y divide-gray-50 px-6 py-2">
+                    </div>
+            </div>
+
+            <div class="card overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Task Name</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Top Performer</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Best Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="global-lb-body" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="view-notice" class="view-content hidden">
+            <h2 class="text-2xl font-bold mb-8">Announcements</h2>
+            <div class="space-y-4 max-w-4xl" id="notice-list"></div>
         </section>
 
         <section id="view-task-detail" class="view-content hidden">
@@ -66,159 +149,209 @@
         
     </main>
 
-    <footer class="max-w-6xl mx-auto px-4 py-10 text-center text-gray-400 text-sm border-t border-gray-100 mt-12">
+    <footer class="max-w-6xl mx-auto px-4 py-12 text-center text-gray-400 text-xs border-t border-gray-100 mt-20 uppercase tracking-widest">
         &copy; 2026 OpenOperator Project. Hosted on GitHub Pages.
     </footer>
 
     <script>
-        // 全局数据存储
-        let db = { tasks: [] };
+        let db = { tasks: [], competition_info: {}, timeline: [], notices: [] };
+        let teamStatsData = []; // 用于存储统计后的队伍数据，方便搜索过滤
 
-        // 页面初始化：加载数据并根据 URL 参数渲染视图
         async function init() {
             try {
-                // 读取同目录下的 data.json
                 const res = await fetch('./data.json');
-                if (!res.ok) throw new Error('Network response was not ok');
+                if (!res.ok) throw new Error('Failed to fetch data');
                 db = await res.json();
                 
-                // 更新顶部时间戳
                 document.getElementById('update-ts').innerText = `Last Update: ${db.last_updated}`;
                 
-                // 预渲染静态部分
+                renderHome();
+                renderNotices();
                 renderGlobalLeaderboard();
                 renderProblemList();
                 
-                // 处理 URL 路由 (例如 ?task=T001)
                 const params = new URLSearchParams(window.location.search);
                 const taskId = params.get('task');
                 if (taskId) {
                     showTaskDetail(taskId);
                 } else {
-                    showView('leaderboard'); // 默认显示总榜
+                    showView('home');
                 }
             } catch (e) {
-                console.error("Data load error:", e);
-                document.body.innerHTML = `<div class="text-center py-20 text-red-600"><h1>Error Loading Data</h1><p>Make sure data.json exists and is valid.</p></div>`;
+                console.error("Initialization Error:", e);
+                document.body.innerHTML = `<div class="text-center py-20 text-red-600 font-mono">CRITICAL ERROR: DATA_LOAD_FAILED</div>`;
             }
         }
 
-        // 切换主视图 (leaderboard / problems / task-detail)
         function showView(viewId) {
-            // 隐藏所有视图内容
             document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
-            // 显示目标视图
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
             
-            // 更新导航栏激活状态
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('nav-active'));
-            if (viewId === 'leaderboard') document.getElementById('nav-lb').classList.add('nav-active');
-            if (viewId === 'problems') document.querySelector('[onclick="showView(\'problems\')"]').classList.add('nav-active');
+            const activeNav = document.getElementById(`nav-${viewId}`);
+            if (activeNav) activeNav.classList.add('nav-active');
 
-            // 如果不是详情页，清空 URL 参数
             if(viewId !== 'task-detail') {
                 window.history.pushState({}, '', window.location.pathname);
+                window.scrollTo(0,0);
             }
         }
 
-        // 渲染总排行榜
-        function renderGlobalLeaderboard() {
-            const container = document.getElementById('global-lb-body');
-            if (!db.tasks || db.tasks.length === 0) {
-                container.innerHTML = `<tr><td colspan="3" class="text-center py-10 text-gray-500">No tasks defined.</td></tr>`;
-                return;
-            }
+        function renderHome() {
+            const info = db.competition_info;
+            document.getElementById('home-title').innerText = info.name;
+            document.getElementById('home-desc').innerText = info.description;
+            document.getElementById('home-contact').innerText = info.contact;
 
-            container.innerHTML = db.tasks.map(task => {
-                // 获取第一名数据，如果没有则显示默认值
-                const top = task.results && task.results.length > 0 
-                    ? task.results[0] 
-                    : { user: 'N/A', github: 'none', score: '-' };
-                
-                return `
-                    <tr class="hover:bg-blue-50 cursor-pointer transition-colors" onclick="showTaskDetail('${task.id}', 'leaderboard')">
-                        <td class="px-6 py-4 font-medium text-blue-700">${task.name}</td>
-                        <td class="px-6 py-4 text-sm">@${top.github}</td>
-                        <td class="px-6 py-4 text-right font-mono font-bold">${top.score.toFixed(6)}</td>
-                    </tr>
-                `;
-            }).join('');
+            const uniqueUsers = new Set();
+            let totalSubmissions = 0;
+            db.tasks.forEach(t => {
+                totalSubmissions += t.results.length;
+                t.results.forEach(r => uniqueUsers.add(r.github));
+            });
+
+            document.getElementById('stat-tasks').innerText = db.tasks.length;
+            document.getElementById('stat-users').innerText = uniqueUsers.size;
+            document.getElementById('stat-subs').innerText = totalSubmissions;
+
+            document.getElementById('home-timeline').innerHTML = db.timeline.map(item => `
+                <li class="flex gap-4">
+                    <div class="flex flex-col items-center">
+                        <div class="w-2.5 h-2.5 rounded-full bg-blue-600 mt-1.5"></div>
+                        <div class="w-px h-full bg-gray-200"></div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-mono font-bold text-blue-600 uppercase mb-1">${item.date}</p>
+                        <p class="text-gray-700 text-sm">${item.event}</p>
+                    </div>
+                </li>
+            `).join('');
         }
 
-        // 渲染题目列表
-        function renderProblemList() {
-            const container = document.getElementById('problem-list');
-            if (!db.tasks || db.tasks.length === 0) {
-                container.innerHTML = `<p class="text-center py-10 text-gray-500">No problems available.</p>`;
+        function renderNotices() {
+            const container = document.getElementById('notice-list');
+            if (!db.notices || db.notices.length === 0) {
+                container.innerHTML = `<p class="text-gray-400">No announcements yet.</p>`;
                 return;
             }
-
-            container.innerHTML = db.tasks.map(task => `
-                <div class="card p-6 hover:border-blue-400 cursor-pointer transition-all" onclick="showTaskDetail('${task.id}', 'info')">
-                    <h3 class="text-lg font-bold text-gray-800">${task.name}</h3>
-                    <p class="text-gray-500 text-sm mt-1 truncate">${task.description.workload}</p>
+            container.innerHTML = db.notices.map(n => `
+                <div class="bg-gray-100/50 border border-gray-200 rounded-xl p-6 hover:bg-gray-100 transition-colors">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-gray-900">${n.title}</h3>
+                        <span class="text-[10px] font-mono bg-white text-gray-500 px-2 py-1 rounded border border-gray-100 shadow-sm">${n.date}</span>
+                    </div>
+                    <p class="text-gray-600 text-sm leading-relaxed">${n.content}</p>
                 </div>
             `).join('');
         }
 
-        // 渲染题目详情页 (SPA 逻辑)
-        // taskId: 题目 ID (如 T001)
-        // subView: 初始显示的子标签页 ('info' 或 'leaderboard')
-        function showTaskDetail(taskId, subView = 'info') {
-            const task = db.tasks.find(t => t.id === taskId);
-            if (!task) {
-                alert('Task not found');
-                showView('leaderboard');
+        function renderGlobalLeaderboard() {
+            const container = document.getElementById('global-lb-body');
+            const teamCounts = {};
+
+            container.innerHTML = db.tasks.map(task => {
+                const top = task.results?.[0] || { github: 'N/A', score: 0 };
+                if (top.github !== 'N/A') {
+                    teamCounts[top.github] = (teamCounts[top.github] || 0) + 1;
+                }
+                return `
+                    <tr class="hover:bg-blue-50 cursor-pointer transition-colors" onclick="showTaskDetail('${task.id}', 'leaderboard')">
+                        <td class="px-6 py-5 font-bold text-blue-700 text-sm">${task.name}</td>
+                        <td class="px-6 py-5 text-sm font-medium text-gray-600">@${top.github}</td>
+                        <td class="px-6 py-5 text-right font-mono font-bold text-gray-900">${Number(top.score).toFixed(6)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // 统计数据处理
+            teamStatsData = Object.entries(teamCounts)
+                .map(([name, count]) => ({ name, count }))
+                .sort((a, b) => b.count - a.count);
+
+            renderTeamStats(teamStatsData);
+        }
+
+        function renderTeamStats(data) {
+            const list = document.getElementById('team-stats-list');
+            list.className = "h-[450px] overflow-y-auto custom-scrollbar bg-gray-100/50 rounded-xl m-4 p-2 space-y-2";
+            
+            if (data.length === 0) {
+                list.innerHTML = `<p class="text-gray-400 text-[10px] py-4 text-center">No teams found</p>`;
                 return;
             }
+            
+            list.innerHTML = data.map((team, idx) => `
+                <div class="py-3 px-4 flex items-center justify-between group bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all">
+                    <div class="flex items-center gap-4">
+                        <span class="text-xs font-mono text-gray-300 w-6">#${idx + 1}</span>
+                        <span class="text-sm font-bold text-gray-700 group-hover:text-blue-600 transition-colors cursor-default">@${team.name}</span>
+                    </div>
+                    <span class="text-xs font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">${team.count} Tasks</span>
+                </div>
+            `).join('');
+        }
 
-            // 切换到详情视图
+        function filterTeams() {
+            const query = document.getElementById('team-search').value.toLowerCase();
+            const filtered = teamStatsData.filter(t => t.name.toLowerCase().includes(query));
+            renderTeamStats(filtered);
+        }
+
+        function renderProblemList() {
+            document.getElementById('problem-list').innerHTML = db.tasks.map(task => `
+                <div class="card p-4 hover:border-blue-400 cursor-pointer transition-all group" onclick="showTaskDetail('${task.id}', 'info')">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-gray-800 group-hover:text-blue-600">${task.name}</h3>
+                        <span class="text-xs font-mono text-gray-400">#${task.id}</span>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-1 line-clamp-1">${task.description.workload}</p>
+                </div>
+            `).join('');
+        }
+
+        function showTaskDetail(taskId, subView = 'info') {
+            const task = db.tasks.find(t => t.id === taskId);
+            if (!task) return showView('home');
+
             showView('task-detail');
-            // 更新 URL 参数，支持分享链接
             window.history.pushState({}, '', `?task=${taskId}`);
 
             const content = document.getElementById('task-detail-content');
-            
-            // 渲染详情页 HTML 结构
             content.innerHTML = `
-                <nav class="flex gap-2 text-sm text-gray-500 mb-4">
+                <nav class="flex gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 mb-8">
                     <a href="javascript:void(0)" onclick="showView('leaderboard')" class="hover:text-blue-600">Leaderboard</a>
                     <span>/</span>
                     <span class="text-gray-900">${task.name}</span>
                 </nav>
                 
-                <h1 class="text-3xl font-bold mb-8 cursor-pointer hover:text-blue-600" onclick="showTaskDetail('${task.id}', 'info')">
-                    ${task.name}
-                </h1>
+                <h1 class="text-3xl font-black mb-8 tracking-tight">${task.name}</h1>
 
-                <div class="flex gap-6 border-b border-gray-200 mb-8">
-                    <button onclick="toggleSubView('info')" id="btn-info" class="pb-2 border-b-2 font-medium transition-colors ${subView==='info'?'border-blue-600 text-blue-600':'border-transparent text-gray-500 hover:text-blue-600'}">Description</button>
-                    <button onclick="toggleSubView('lb')" id="btn-lb" class="pb-2 border-b-2 font-medium transition-colors ${subView==='leaderboard'?'border-blue-600 text-blue-600':'border-transparent text-gray-500 hover:text-blue-600'}">Leaderboard</button>
+                <div class="flex gap-8 border-b border-gray-100 mb-8">
+                    <button onclick="toggleSubView('info')" id="btn-info" class="pb-4 border-b-2 font-bold text-sm tracking-widest uppercase transition-all ${subView==='info'?'border-blue-600 text-blue-600':'border-transparent text-gray-400'}">Description</button>
+                    <button onclick="toggleSubView('lb')" id="btn-lb" class="pb-4 border-b-2 font-bold text-sm tracking-widest uppercase transition-all ${subView==='leaderboard'?'border-blue-600 text-blue-600':'border-transparent text-gray-400'}">Leaderboard</button>
                 </div>
 
                 <div id="sub-info" class="${subView==='info'?'':'hidden'} space-y-8">
-                    <div class="card p-6">
-                        <h4 class="font-bold text-gray-400 uppercase text-xs mb-4 tracking-widest">Description</h4>
-                        <div class="grid md:grid-cols-2 gap-8">
+                    <div class="card p-8">
+                        <div class="grid md:grid-cols-2 gap-12">
                             <div>
-                                <p class="text-sm font-semibold text-gray-500 uppercase">Input</p>
-                                <code class="block bg-gray-100 p-2 rounded mt-2 text-sm text-gray-800">${task.description.input}</code>
+                                <p class="stat-label mb-3">Input Tensors</p>
+                                <code class="block bg-gray-50 p-3 rounded text-sm border border-gray-100">${task.description.input}</code>
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-gray-500 uppercase">Output</p>
-                                <code class="block bg-gray-100 p-2 rounded mt-2 text-sm text-gray-800">${task.description.output}</code>
+                                <p class="stat-label mb-3">Output Tensors</p>
+                                <code class="block bg-gray-50 p-3 rounded text-sm border border-gray-100">${task.description.output}</code>
                             </div>
                         </div>
-                        <div class="mt-6">
-                            <p class="text-sm font-semibold text-gray-500 uppercase">Workload</p>
-                            <p class="mt-2 text-gray-700">${task.description.workload}</p>
+                        <div class="mt-8">
+                            <p class="stat-label mb-3">Optimization Target</p>
+                            <p class="text-gray-700 leading-relaxed">${task.description.workload}</p>
                         </div>
                     </div>
-                    
-                    <div class="card p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h4 class="font-bold text-gray-400 uppercase text-xs tracking-widest">Reference Implementation</h4>
-                            <button onclick="copyCode()" class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1 rounded font-medium transition-colors">Copy Code</button>
+                    <div class="card p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="stat-label">Reference Kernel</h4>
+                            <button onclick="copyCode()" class="text-[10px] bg-gray-900 text-white px-4 py-1.5 rounded-full font-bold hover:bg-blue-600 transition-colors">COPY_CODE</button>
                         </div>
                         <pre><code id="code-block">${escapeHtml(task.reference_implementation)}</code></pre>
                     </div>
@@ -226,24 +359,24 @@
 
                 <div id="sub-lb" class="${subView==='leaderboard'?'':'hidden'}">
                     <div class="card overflow-hidden">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                <tr>
-                                    <th class="px-6 py-3">Rank</th>
-                                    <th class="px-6 py-3">User</th>
-                                    <th class="px-6 py-3">Score</th>
-                                    <th class="px-6 py-3">Latency</th>
-                                    <th class="px-6 py-3">Submitted</th>
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    <th class="px-6 py-4">Rank</th>
+                                    <th class="px-6 py-4">User</th>
+                                    <th class="px-6 py-4">Score</th>
+                                    <th class="px-6 py-4">Latency</th>
+                                    <th class="px-6 py-4 text-right">Date</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
                                 ${task.results.map(r => `
-                                    <tr>
-                                        <td class="px-6 py-4 font-bold text-gray-400">#${r.rank}</td>
-                                        <td class="px-6 py-4 font-medium text-blue-600">@${r.github}</td>
-                                        <td class="px-6 py-4 font-mono font-bold text-gray-900">${r.score.toFixed(6)}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">${r.latency}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-400">${r.date}</td>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 font-black text-gray-300">#${r.rank}</td>
+                                        <td class="px-6 py-4 font-bold text-blue-600 text-sm">@${r.github}</td>
+                                        <td class="px-6 py-4 font-mono font-bold text-sm">${Number(r.score).toFixed(6)}</td>
+                                        <td class="px-6 py-4 text-xs font-mono text-gray-500">${r.latency}</td>
+                                        <td class="px-6 py-4 text-right text-[10px] font-mono text-gray-400">${r.date}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -253,49 +386,30 @@
             `;
         }
 
-        // HTML 安全转义函数：防止代码中的 < > 符号破坏页面结构
+        function toggleSubView(type) {
+            const isInfo = type === 'info';
+            document.getElementById('sub-info').classList.toggle('hidden', !isInfo);
+            document.getElementById('sub-lb').classList.toggle('hidden', isInfo);
+            document.getElementById('btn-info').className = isInfo ? "pb-4 border-b-2 border-blue-600 text-blue-600 font-bold text-sm tracking-widest uppercase transition-all" : "pb-4 border-b-2 border-transparent text-gray-400 font-bold text-sm tracking-widest uppercase transition-all";
+            document.getElementById('btn-lb').className = !isInfo ? "pb-4 border-b-2 border-blue-600 text-blue-600 font-bold text-sm tracking-widest uppercase transition-all" : "pb-4 border-b-2 border-transparent text-gray-400 font-bold text-sm tracking-widest uppercase transition-all";
+        }
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // 一键复制代码功能
         function copyCode() {
             const code = document.getElementById('code-block').textContent;
             navigator.clipboard.writeText(code).then(() => {
-                // 简单的成功反馈
                 const btn = document.querySelector('[onclick="copyCode()"]');
-                const originalText = btn.innerText;
-                btn.innerText = 'Copied!';
-                btn.classList.replace('bg-blue-50', 'bg-green-50');
-                btn.classList.replace('text-blue-700', 'text-green-700');
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.classList.replace('bg-green-50', 'bg-blue-50');
-                    btn.classList.replace('text-green-700', 'text-blue-700');
-                }, 1500);
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-                alert('Failed to copy code. Please check browser permissions.');
+                btn.innerText = 'COPIED!';
+                btn.classList.add('bg-green-600');
+                setTimeout(() => { btn.innerText = 'COPY_CODE'; btn.classList.remove('bg-green-600'); }, 1500);
             });
         }
 
-        // 切换题目详情页内的子标签页
-        function toggleSubView(type) {
-            const isInfo = type === 'info';
-            document.getElementById('sub-info').classList.toggle('hidden', !isInfo);
-            document.getElementById('sub-lb').classList.toggle('hidden', isInfo);
-            
-            // 更新按钮样式
-            const activeClass = "pb-2 border-b-2 border-blue-600 text-blue-600 font-medium";
-            const inactiveClass = "pb-2 border-b-2 border-transparent text-gray-500 hover:text-blue-600 font-medium";
-            
-            document.getElementById('btn-info').className = isInfo ? activeClass : inactiveClass;
-            document.getElementById('btn-lb').className = !isInfo ? activeClass : inactiveClass;
-        }
-
-        // 页面加载完成后执行初始化
         window.onload = init;
     </script>
 </body>
