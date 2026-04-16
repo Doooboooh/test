@@ -1,0 +1,16 @@
+{
+  "task_id": "005",
+  "last_updated": "2026-04-13",
+  "results": [
+      {"rank": 1, "user": "MeshFlow", "github": "mesh_f", "score": 0.672211, "latency": "2.110ms", "date": "2026-04-01"},
+      {"rank": 2, "user": "GeoCoder", "github": "geo_c", "score": 0.651120, "latency": "2.150ms", "date": "2026-03-30"},
+      {"rank": 3, "user": "SimuLink", "github": "simu_l", "score": 0.630011, "latency": "2.200ms", "date": "2026-03-25"},
+      {"rank": 4, "user": "Struct_X", "github": "struct_x", "score": 0.612231, "latency": "2.250ms", "date": "2026-03-20"},
+      {"rank": 5, "user": "DataBender", "github": "dbender", "score": 0.582211, "latency": "2.350ms", "date": "2026-03-15"},
+      {"rank": 6, "user": "IndexHero", "github": "idx_h", "score": 0.552211, "latency": "2.450ms", "date": "2026-03-12"},
+      {"rank": 7, "user": "CacheKiller", "github": "cache_k", "score": 0.521120, "latency": "2.550ms", "date": "2026-03-10"},
+      {"rank": 8, "user": "Mem_Dev", "github": "mem_d", "score": 0.490011, "latency": "2.700ms", "date": "2026-03-05"},
+      {"rank": 9, "user": "VoidPointer", "github": "v_ptr", "score": 0.452211, "latency": "3.000ms", "date": "2026-03-02"},
+      {"rank": 10, "user": "Beginner_1", "github": "b_1", "score": 0.310022, "latency": "4.500ms", "date": "2026-03-01"}
+    ]
+}

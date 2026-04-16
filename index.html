@@ -1,416 +1,704 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenOperator | High Performance Leaderboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        .nav-link { @apply px-4 py-2 text-gray-500 hover:text-blue-600 font-medium transition-colors border-b-2 border-transparent; }
-        .nav-active { @apply text-blue-600 border-blue-600; }
-        .card { @apply bg-white border border-gray-200 rounded-lg shadow-sm; }
-        pre { @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto font-mono text-sm leading-relaxed; }
-        code { font-family: 'Fira Code', monospace; }
-        :focus { outline: 2px solid #2563eb; outline-offset: 2px; }
-        .stat-value { @apply text-2xl font-bold text-blue-600 font-mono; }
-        .stat-label { @apply text-xs text-gray-400 uppercase font-bold tracking-wider; }
-        /* 自定义滚动条样式 */
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0b0d17;
+            color: #e2e8f0;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.8);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        .task-card { transition: all 0.3s ease; }
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(96, 165, 250, 0.15);
+        }
+        .modal-overlay { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
+        .badge-basic   { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3);  }
+        .badge-medium  { background: rgba(234,179,8,0.15);  color: #facc15; border: 1px solid rgba(234,179,8,0.3);  }
+        .badge-hard    { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3);  }
+        .badge-category{ background: rgba(96,165,250,0.15); color: #93c5fd; border: 1px solid rgba(96,165,250,0.3); }
+        .badge-source  { background: rgba(167,139,250,0.15);color: #c4b5fd; border: 1px solid rgba(167,139,250,0.3);}
+        .badge-dtype   { background: rgba(244,114,182,0.15);color: #f9a8d4; border: 1px solid rgba(244,114,182,0.3);}
+        .live-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+        .nav-link { position: relative; transition: color .3s; }
+        .nav-link:hover { color: #60a5fa; }
+        .nav-link.active { color: #60a5fa; }
+        .nav-link.active::after {
+            content:''; position:absolute; bottom:-4px; left:0; right:0;
+            height:2px; background:linear-gradient(90deg,#60a5fa,#a78bfa); border-radius:1px;
+        }
+        .stat-card {
+            background: rgba(17,24,39,0.6); border:1px solid rgba(75,85,99,0.3);
+            border-radius:16px; padding:24px; text-align:center; transition:all .3s;
+        }
+        .stat-card:hover { border-color: rgba(96,165,250,0.3); }
+        .detail-section {
+            background: rgba(17,24,39,0.5); border:1px solid rgba(75,85,99,0.2);
+            border-radius:12px; padding:20px; margin-bottom:16px;
+        }
+        .detail-section-title {
+            font-size:.75rem; text-transform:uppercase; letter-spacing:.05em;
+            color:#64748b; margin-bottom:12px; font-weight:600;
+        }
+        .code-block {
+            font-family:'JetBrains Mono',monospace; background:#0d1117;
+            border:1px solid rgba(75,85,99,0.3);
+        }
+        .leaderboard-table { width:100%; border-collapse:separate; border-spacing:0; }
+        .leaderboard-table thead th {
+            background:rgba(17,24,39,0.8); padding:12px 16px; text-align:left;
+            font-weight:600; font-size:.85rem; color:#94a3b8; text-transform:uppercase;
+            letter-spacing:.05em; border-bottom:1px solid rgba(75,85,99,0.3);
+        }
+        .leaderboard-table tbody td {
+            padding:12px 16px; border-bottom:1px solid rgba(75,85,99,0.15);
+        }
+        .leaderboard-table tbody tr:hover { background:rgba(96,165,250,0.05); }
+        .result-table { width:100%; border-collapse:separate; border-spacing:0; }
+        .result-table thead th {
+            background:rgba(17,24,39,0.6); padding:10px 12px; text-align:left;
+            font-weight:600; font-size:.75rem; color:#94a3b8; text-transform:uppercase;
+            letter-spacing:.05em; border-bottom:1px solid rgba(75,85,99,0.3);
+        }
+        .result-table tbody td {
+            padding:10px 12px; border-bottom:1px solid rgba(75,85,99,0.15); font-size:.85rem;
+        }
+        .result-table tbody tr:hover { background:rgba(96,165,250,0.05); }
+        .rank-1 { color:#fbbf24; font-weight:700; }
+        .rank-2 { color:#d1d5db; font-weight:600; }
+        .rank-3 { color:#d97706; font-weight:600; }
+        .scrollbar-thin::-webkit-scrollbar { width:6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background:rgba(17,24,39,0.5); }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background:rgba(75,85,99,0.5); border-radius:3px; }
+        .line-clamp-2 {
+            display:-webkit-box; -webkit-line-clamp:2;
+            -webkit-box-orient:vertical; overflow:hidden;
+        }
+        .timeline-item { position: relative; padding-left: 28px; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 8px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid #3b82f6;
+            background: #0b0d17;
+            z-index: 1;
+        }
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 22px;
+            width: 2px;
+            bottom: -8px;
+            background: rgba(59, 130, 246, 0.2);
+        }
+        .timeline-item:last-child::after { display: none; }
+        .timeline-item.past::before { background: #3b82f6; }
+        .notice-card {
+            background: rgba(17, 24, 39, 0.5);
+            border: 1px solid rgba(75, 85, 99, 0.2);
+            border-radius: 12px;
+            padding: 16px 20px;
+            transition: all 0.3s;
+        }
+        .notice-card:hover { border-color: rgba(96, 165, 250, 0.3); }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="min-h-screen">
 
-    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 flex items-center justify-between h-16">
-            <div class="flex items-center gap-8">
-                <a href="javascript:void(0)" onclick="showView('home')" class="text-xl font-bold tracking-tighter italic">Open<span class="text-blue-600">Operator</span></a>
-                <div class="hidden md:flex gap-2">
-                    <a href="javascript:void(0)" onclick="showView('problems')" class="nav-link" id="nav-problems">Problems</a>
-                    <a href="javascript:void(0)" onclick="showView('leaderboard')" class="nav-link" id="nav-leaderboard">Leaderboard</a>
-                    <a href="javascript:void(0)" onclick="showView('notice')" class="nav-link" id="nav-notice">Notice</a>
-                </div>
-            </div>
-            <div id="update-ts" class="text-[10px] text-gray-400 font-mono uppercase"></div>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 z-50 flex items-center justify-center" style="background:#0b0d17;">
+        <div class="text-center">
+            <div class="inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-gray-400">Loading...</p>
         </div>
-    </nav>
+    </div>
 
-    <main class="max-w-6xl mx-auto px-4 py-8 min-h-[70vh]">
-        
-        <section id="view-home" class="view-content hidden">
-            <div class="max-w-4xl mx-auto py-10">
-                <div class="text-center mb-16">
-                    <h1 class="text-5xl font-extrabold text-gray-900 mb-6 tracking-tight" id="home-title">Loading...</h1>
-                    <p class="text-xl text-gray-600 leading-relaxed" id="home-desc"></p>
+    <!-- Header -->
+    <header class="sticky top-0 z-40" style="background:rgba(11,13,23,0.95); backdrop-filter:blur(10px); border-bottom:1px solid rgba(75,85,99,0.2);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="showMainView()">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);">
+                        <span class="text-white font-bold text-sm">O</span>
+                    </div>
+                    <div><span class="font-bold text-white">Open</span><span class="font-light text-blue-400">Operator</span></div>
                 </div>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-                    <div class="relative overflow-hidden bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-blue-50 rounded-full opacity-50"></div>
-                        <p class="text-xs font-black text-blue-600 uppercase tracking-widest mb-2 relative">Active Tasks</p>
-                        <p class="text-5xl font-black text-gray-900 tracking-tighter relative" id="stat-tasks">0</p>
-                        <p class="text-gray-400 text-xs mt-2 relative">挑战题目总数</p>
-                    </div>
+                <nav class="flex items-center space-x-8">
+                    <a href="#problems" class="nav-link active text-sm font-medium" data-nav="problems" onclick="switchNav('problems')">Problems</a>
+                    <a href="#leaderboard" class="nav-link text-sm font-medium text-gray-400" data-nav="leaderboard" onclick="switchNav('leaderboard')">Leaderboard</a>
+                    <a href="#announcements" class="nav-link text-sm font-medium text-gray-400" data-nav="notice" onclick="switchNav('notice')">Notice</a>
+                </nav>
+            </div>
+        </div>
+    </header>
 
-                    <div class="relative overflow-hidden bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-indigo-50 rounded-full opacity-50"></div>
-                        <p class="text-xs font-black text-indigo-600 uppercase tracking-widest mb-2 relative">Participants</p>
-                        <p class="text-5xl font-black text-gray-900 tracking-tighter relative" id="stat-users">0</p>
-                        <p class="text-gray-400 text-xs mt-2 relative">全球参赛选手</p>
-                    </div>
+    <!-- Main Content -->
+    <main id="mainContent" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-                    <div class="relative overflow-hidden bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-emerald-50 rounded-full opacity-50"></div>
-                        <p class="text-xs font-black text-emerald-600 uppercase tracking-widest mb-2 relative">Submissions</p>
-                        <p class="text-5xl font-black text-gray-900 tracking-tighter relative" id="stat-subs">0</p>
-                        <p class="text-gray-400 text-xs mt-2 relative">总提交记录数</p>
-                    </div>
-
-                    <div class="relative overflow-hidden bg-blue-600 p-8 rounded-2xl shadow-lg shadow-blue-100">
-                        <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-white/10 rounded-full"></div>
-                        <p class="text-xs font-black text-blue-100 uppercase tracking-widest mb-2 relative">Platform Status</p>
-                        <p class="text-4xl font-black text-white tracking-tighter relative flex items-center gap-2" id="stat-status">
-                            LIVE <span class="relative inline-flex rounded-full h-3 w-3 bg-green-400"></span>
-                        </p>
-                        <p class="text-blue-100/80 text-xs mt-4 relative font-medium">竞赛火热进行中</p>
-                    </div>
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            <div class="stat-card">
+                <div class="text-3xl font-bold gradient-text mb-1" id="statTasks">0</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider">Active Tasks</div>
+                <div class="text-xs text-gray-600 mt-1">挑战题目总数</div>
+            </div>
+            <div class="stat-card">
+                <div class="text-3xl font-bold gradient-text mb-1" id="statParticipants">0</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider">Participants</div>
+                <div class="text-xs text-gray-600 mt-1">全球参赛选手</div>
+            </div>
+            <div class="stat-card">
+                <div class="text-3xl font-bold gradient-text mb-1" id="statSubmissions">0</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider">Submissions</div>
+                <div class="text-xs text-gray-600 mt-1">总提交记录数</div>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center justify-center space-x-2 mb-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-green-500 live-dot"></span>
+                    <span class="text-xl font-bold text-green-400">LIVE</span>
                 </div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider">Platform Status</div>
+                <div class="text-xs text-gray-600 mt-1">竞赛火热进行中</div>
+            </div>
+        </div>
 
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div class="card p-8">
-                        <h3 class="font-bold text-lg mb-6 flex items-center gap-2 border-b pb-4">
-                            <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span> Timeline
-                        </h3>
-                        <ul class="space-y-6" id="home-timeline"></ul>
-                    </div>
-                    <div class="card p-8">
-                        <h3 class="font-bold text-lg mb-6 flex items-center gap-2 border-b pb-4">
-                            <span class="w-1.5 h-6 bg-gray-400 rounded-full"></span> Contact & Resources
-                        </h3>
-                        <div class="text-gray-600 text-sm leading-loose whitespace-pre-wrap" id="home-contact"></div>
-                    </div>
+        <!-- 🔧 修改 1：Timeline & Contact 区域改为动态容器 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="text-lg font-semibold text-white mb-4">Timeline</h3>
+                <div id="timelineContainer" class="text-sm text-gray-400">
+                    <p class="text-gray-500">加载中...</p>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="text-lg font-semibold text-white mb-4">Contact & Resources</h3>
+                <div id="contactContainer" class="text-sm text-gray-400">
+                    <p class="text-gray-500">加载中...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Problems -->
+        <section id="problems" class="mb-10">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                <h2 class="text-2xl font-bold text-white">Available Problems</h2>
+                <div class="flex items-center space-x-2 flex-wrap gap-2">
+                    <input type="text" id="searchInput" placeholder="搜索题目..."
+                        class="px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style="background:rgba(17,24,39,0.8); border:1px solid rgba(75,85,99,0.3); color:#e2e8f0;"
+                        oninput="filterProblems()">
+                    <select id="categoryFilter" onchange="filterProblems()"
+                        class="px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style="background:rgba(17,24,39,0.8); border:1px solid rgba(75,85,99,0.3); color:#e2e8f0;">
+                        <option value="">All Categories</option>
+                    </select>
+                    <select id="difficultyFilter" onchange="filterProblems()"
+                        class="px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style="background:rgba(17,24,39,0.8); border:1px solid rgba(75,85,99,0.3); color:#e2e8f0;">
+                        <option value="">All Difficulties</option>
+                    </select>
+                </div>
+            </div>
+            <div id="problemsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- Global Leaderboard -->
+        <section id="leaderboard" class="mb-10">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-white">Global Leaderboard</h2>
+                <p class="text-sm text-gray-500 mt-1">实时追踪全球选手的任务完成进度与排名</p>
+            </div>
+            <div class="glass-card rounded-2xl overflow-hidden">
+                <div class="px-6 py-4 border-b" style="border-color:rgba(75,85,99,0.2);">
+                    <span class="text-sm font-semibold text-blue-400">Team Domination</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="leaderboard-table">
+                        <thead><tr><th>Task Name</th><th>Top Performer</th><th>Best Score</th></tr></thead>
+                        <tbody id="leaderboardBody">
+                            <tr><td colspan="3" class="text-center text-gray-500 py-8">加载中...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
 
-        <section id="view-problems" class="view-content hidden">
-            <h2 class="text-2xl font-bold mb-8">Available Problems</h2>
-            <div class="grid gap-2" id="problem-list"></div>
-        </section>
-
-        <section id="view-leaderboard" class="view-content hidden">
-            <div class="text-center mb-10">
-                <h2 class="text-3xl font-bold tracking-tight">Global Leaderboard</h2>
-                <p class="text-gray-500 text-sm mt-2">实时追踪全球选手的任务完成进度与排名</p>
-            </div>
-            
-            <div class="card w-full overflow-hidden flex flex-col mb-10">
-                <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-                        <span class="text-xs font-black text-gray-600 uppercase tracking-widest">Team Domination</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <input type="text" id="team-search" oninput="filterTeams()" placeholder="Search team..." 
-                            class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none w-48 md:w-64 transition-all">
-                    </div>
-                </div>
-                <div id="team-stats-list" class="h-[450px] overflow-y-auto custom-scrollbar divide-y divide-gray-50 px-6 py-2">
-                    </div>
-            </div>
-
-            <div class="card overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Task Name</th>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Top Performer</th>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Best Score</th>
-                        </tr>
-                    </thead>
-                    <tbody id="global-lb-body" class="divide-y divide-gray-100"></tbody>
-                </table>
+        <!-- 🔧 修改 2：Announcements 区域改为动态容器 -->
+        <section id="announcements" class="mb-10">
+            <h2 class="text-2xl font-bold text-white mb-6">Announcements</h2>
+            <div id="noticesContainer">
+                <div class="glass-card rounded-2xl p-6"><p class="text-gray-500 text-sm">加载中...</p></div>
             </div>
         </section>
-
-        <section id="view-notice" class="view-content hidden">
-            <h2 class="text-2xl font-bold mb-8">Announcements</h2>
-            <div class="space-y-4 max-w-4xl" id="notice-list"></div>
-        </section>
-
-        <section id="view-task-detail" class="view-content hidden">
-            <div id="task-detail-content"></div>
-        </section>
-        
     </main>
 
-    <footer class="max-w-6xl mx-auto px-4 py-12 text-center text-gray-400 text-xs border-t border-gray-100 mt-20 uppercase tracking-widest">
-        &copy; 2026 OpenOperator Project. Hosted on GitHub Pages.
+    <!-- Task Detail Side Panel -->
+    <div id="taskDetailModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closeTaskDetail()"></div>
+        <div class="relative z-10 h-full flex justify-end">
+            <div id="detailPanel" class="w-full max-w-3xl h-full overflow-y-auto scrollbar-thin"
+                 style="background:#0f1220; border-left:1px solid rgba(75,85,99,0.3); transform:translateX(100%);">
+                <div id="taskDetailContent" class="p-6 md:p-8"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t" style="border-color:rgba(75,85,99,0.2);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center">
+            <p class="text-sm text-gray-500">© 2026 OpenOperator Project. Hosted on GitHub Pages.</p>
+        </div>
     </footer>
 
-    <script>
-        let db = { tasks: [], competition_info: {}, timeline: [], notices: [] };
-        let teamStatsData = []; // 用于存储统计后的队伍数据，方便搜索过滤
+<script>
+// ===================================================================
+//  Data Store
+// ===================================================================
+let tasksData = [];
+let resultsMap = {};
+let filteredTasks = [];
+let currentTaskId = null;
 
-        async function init() {
-            try {
-                const res = await fetch('./data.json');
-                if (!res.ok) throw new Error('Failed to fetch data');
-                db = await res.json();
-                
-                document.getElementById('update-ts').innerText = `Last Update: ${db.last_updated}`;
-                
-                renderHome();
-                renderNotices();
-                renderGlobalLeaderboard();
-                renderProblemList();
-                
-                const params = new URLSearchParams(window.location.search);
-                const taskId = params.get('task');
-                if (taskId) {
-                    showTaskDetail(taskId);
-                } else {
-                    showView('home');
-                }
-            } catch (e) {
-                console.error("Initialization Error:", e);
-                document.body.innerHTML = `<div class="text-center py-20 text-red-600 font-mono">CRITICAL ERROR: DATA_LOAD_FAILED</div>`;
-            }
+/* 🔧 修改 3：新增三个全局变量存储 JSON 中的额外字段 */
+let competitionInfo = {};
+let timelineData = [];
+let noticesData = [];
+
+// ===================================================================
+//  Init
+// ===================================================================
+async function init() {
+    try {
+        const r = await fetch('problems.json');
+        if (r.ok) {
+            const d = await r.json();
+            tasksData = d.tasks || [];
+
+            /* 🔧 修改 4：从 JSON 中提取 competition_info / timeline / notices 并渲染 */
+            competitionInfo = d.competition_info || {};
+            timelineData    = d.timeline || [];
+            noticesData     = d.notices || [];
+        } else {
+            throw new Error('Failed to fetch problems.json');
         }
+    } catch(e) {
+        console.warn('problems.json 加载失败', e);
+        tasksData = [];
+    }
 
-        function showView(viewId) {
-            document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
-            document.getElementById(`view-${viewId}`).classList.remove('hidden');
-            
-            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('nav-active'));
-            const activeNav = document.getElementById(`nav-${viewId}`);
-            if (activeNav) activeNav.classList.add('nav-active');
+    filteredTasks = [...tasksData];
+    populateFilters();
+    renderProblems();
 
-            if(viewId !== 'task-detail') {
-                window.history.pushState({}, '', window.location.pathname);
-                window.scrollTo(0,0);
-            }
+    /* 🔧 渲染新增的三个区域 */
+    renderTimeline();
+    renderContact();
+    renderNotices();
+
+    await loadAllResults();
+    updateStats();
+    renderGlobalLeaderboard();
+    hideLoading();
+}
+
+// ===================================================================
+//  🔧 新增：渲染 Timeline
+// ===================================================================
+function renderTimeline() {
+    const container = document.getElementById('timelineContainer');
+    if (!timelineData.length) {
+        container.innerHTML = '<p class="text-gray-500">暂无时间线信息</p>';
+        return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    container.innerHTML = timelineData.map(item => {
+        const isPast = item.date <= today;
+        return `
+        <div class="timeline-item ${isPast ? 'past' : ''} mb-4">
+            <div class="text-white font-medium text-sm">${esc(item.event)}</div>
+            <div class="text-gray-500 text-xs mt-0.5">${esc(item.date)}</div>
+        </div>`;
+    }).join('');
+}
+
+// ===================================================================
+//  🔧 新增：渲染 Contact & Resources
+// ===================================================================
+function renderContact() {
+    const container = document.getElementById('contactContainer');
+    if (!competitionInfo.name && !competitionInfo.description && !competitionInfo.contact) {
+        container.innerHTML = '<p class="text-gray-500">暂无联系信息</p>';
+        return;
+    }
+
+    let html = '';
+    if (competitionInfo.name) {
+        html += `<div class="text-white font-semibold text-base mb-2">${esc(competitionInfo.name)}</div>`;
+    }
+    if (competitionInfo.description) {
+        html += `<p class="text-gray-400 text-sm mb-3 leading-relaxed">${esc(competitionInfo.description)}</p>`;
+    }
+    if (competitionInfo.contact) {
+        // 把 " | " 分割的多条联系方式逐行展示
+        const parts = competitionInfo.contact.split('|').map(s => s.trim());
+        html += `<div class="space-y-1.5 mt-3 pt-3" style="border-top:1px solid rgba(75,85,99,0.2);">`;
+        parts.forEach(part => {
+            // 尝试检测 Email / GitHub 等
+            let icon = '📎';
+            if (part.toLowerCase().startsWith('email')) icon = '📧';
+            else if (part.toLowerCase().startsWith('github')) icon = '🔗';
+            html += `<div class="flex items-center space-x-2 text-sm">
+                <span>${icon}</span>
+                <span class="text-gray-300">${esc(part)}</span>
+            </div>`;
+        });
+        html += '</div>';
+    }
+
+    container.innerHTML = html;
+}
+
+// ===================================================================
+//  🔧 新增：渲染 Notices / Announcements
+// ===================================================================
+function renderNotices() {
+    const container = document.getElementById('noticesContainer');
+    if (!noticesData.length) {
+        container.innerHTML = '<div class="glass-card rounded-2xl p-6"><p class="text-gray-500 text-sm">暂无公告</p></div>';
+        return;
+    }
+
+    // 按日期倒序（最新的在前）
+    const sorted = [...noticesData].sort((a, b) => b.date.localeCompare(a.date));
+
+    container.innerHTML = `<div class="space-y-4">` + sorted.map(n => `
+        <div class="notice-card">
+            <div class="flex items-start justify-between mb-2">
+                <h4 class="text-white font-semibold text-sm">${esc(n.title)}</h4>
+                <span class="text-xs text-gray-500 flex-shrink-0 ml-4">${esc(n.date)}</span>
+            </div>
+            <p class="text-gray-400 text-sm leading-relaxed">${esc(n.content)}</p>
+        </div>
+    `).join('') + `</div>`;
+}
+
+// ===================================================================
+//  Load result data
+// ===================================================================
+async function loadAllResults() {
+    const fetches = tasksData.map(task => {
+        const url = `result/${task.id}.json`;
+        return fetch(url)
+            .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
+            .then(data => { resultsMap[task.id] = data; })
+            .catch(err => { console.warn(`result/${task.id}.json 加载失败:`, err.message); });
+    });
+    await Promise.all(fetches);
+}
+
+function hideLoading() {
+    const o = document.getElementById('loadingOverlay');
+    o.style.transition = 'opacity .5s'; o.style.opacity = '0';
+    setTimeout(() => o.style.display = 'none', 500);
+}
+
+// ===================================================================
+//  Stats
+// ===================================================================
+function updateStats() {
+    const uniqueUsers = new Set();
+    let totalSubmissions = 0;
+    Object.values(resultsMap).forEach(rd => {
+        if (rd.results && rd.results.length) {
+            rd.results.forEach(r => { uniqueUsers.add(r.user); totalSubmissions++; });
         }
+    });
+    animateNum('statTasks', tasksData.length);
+    animateNum('statParticipants', uniqueUsers.size);
+    animateNum('statSubmissions', totalSubmissions);
+}
 
-        function renderHome() {
-            const info = db.competition_info;
-            document.getElementById('home-title').innerText = info.name;
-            document.getElementById('home-desc').innerText = info.description;
-            document.getElementById('home-contact').innerText = info.contact;
+function animateNum(id, target) {
+    const el = document.getElementById(id);
+    if (target === 0) { el.textContent = '0'; return; }
+    let cur = 0;
+    const step = Math.max(1, Math.floor(target / 30));
+    const iv = setInterval(() => {
+        cur += step; if (cur >= target) { cur = target; clearInterval(iv); }
+        el.textContent = cur;
+    }, 30);
+}
 
-            const uniqueUsers = new Set();
-            let totalSubmissions = 0;
-            db.tasks.forEach(t => {
-                totalSubmissions += t.results.length;
-                t.results.forEach(r => uniqueUsers.add(r.github));
-            });
-
-            document.getElementById('stat-tasks').innerText = db.tasks.length;
-            document.getElementById('stat-users').innerText = uniqueUsers.size;
-            document.getElementById('stat-subs').innerText = totalSubmissions;
-
-            document.getElementById('home-timeline').innerHTML = db.timeline.map(item => `
-                <li class="flex gap-4">
-                    <div class="flex flex-col items-center">
-                        <div class="w-2.5 h-2.5 rounded-full bg-blue-600 mt-1.5"></div>
-                        <div class="w-px h-full bg-gray-200"></div>
-                    </div>
-                    <div>
-                        <p class="text-xs font-mono font-bold text-blue-600 uppercase mb-1">${item.date}</p>
-                        <p class="text-gray-700 text-sm">${item.event}</p>
-                    </div>
-                </li>
-            `).join('');
+// ===================================================================
+//  Global Leaderboard
+// ===================================================================
+function renderGlobalLeaderboard() {
+    const tbody = document.getElementById('leaderboardBody');
+    const rows = [];
+    tasksData.forEach(task => {
+        const rd = resultsMap[task.id];
+        if (rd && rd.results && rd.results.length) {
+            const sorted = [...rd.results].sort((a, b) => b.score - a.score);
+            const top = sorted[0];
+            rows.push({ taskId: task.id, taskName: task.name, topUser: top.user, topGithub: top.github || '', bestScore: top.score, latency: top.latency || '' });
+        } else {
+            rows.push({ taskId: task.id, taskName: task.name, topUser: '—', topGithub: '', bestScore: null, latency: '' });
         }
+    });
+    if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500 py-8">暂无排名数据</td></tr>';
+        return;
+    }
+    tbody.innerHTML = rows.map(r => {
+        const scoreStr = r.bestScore !== null
+            ? `<span class="text-green-400 font-mono font-semibold">${r.bestScore.toFixed(6)}</span>${r.latency ? `<span class="text-gray-500 text-xs ml-2">${r.latency}</span>` : ''}`
+            : '<span class="text-gray-600">暂无提交</span>';
+        const userStr = r.topUser !== '—'
+            ? `<div class="flex items-center space-x-2">
+                   <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;">${r.topUser.charAt(0).toUpperCase()}</div>
+                   <div><div class="text-white text-sm font-medium">${esc(r.topUser)}</div>${r.topGithub ? `<div class="text-gray-500 text-xs">@${esc(r.topGithub)}</div>` : ''}</div>
+               </div>` : '<span class="text-gray-600">—</span>';
+        return `<tr class="cursor-pointer" onclick="openTaskDetail('${r.taskId}')">
+            <td><div class="flex items-center space-x-2"><span class="text-gray-500 text-xs">#${r.taskId}</span><span class="text-white text-sm font-medium">${esc(r.taskName)}</span></div></td>
+            <td>${userStr}</td><td>${scoreStr}</td></tr>`;
+    }).join('');
+}
 
-        function renderNotices() {
-            const container = document.getElementById('notice-list');
-            if (!db.notices || db.notices.length === 0) {
-                container.innerHTML = `<p class="text-gray-400">No announcements yet.</p>`;
-                return;
-            }
-            container.innerHTML = db.notices.map(n => `
-                <div class="bg-gray-100/50 border border-gray-200 rounded-xl p-6 hover:bg-gray-100 transition-colors">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="font-bold text-gray-900">${n.title}</h3>
-                        <span class="text-[10px] font-mono bg-white text-gray-500 px-2 py-1 rounded border border-gray-100 shadow-sm">${n.date}</span>
-                    </div>
-                    <p class="text-gray-600 text-sm leading-relaxed">${n.content}</p>
+// ===================================================================
+//  Filters
+// ===================================================================
+function populateFilters() {
+    const cats  = [...new Set(tasksData.map(t => t.description.category).filter(Boolean))];
+    const diffs = [...new Set(tasksData.map(t => t.description.difficulty).filter(Boolean))];
+    const cs = document.getElementById('categoryFilter');
+    cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; cs.appendChild(o); });
+    const ds = document.getElementById('difficultyFilter');
+    diffs.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; ds.appendChild(o); });
+}
+
+function filterProblems() {
+    const s = document.getElementById('searchInput').value.toLowerCase();
+    const c = document.getElementById('categoryFilter').value;
+    const d = document.getElementById('difficultyFilter').value;
+    filteredTasks = tasksData.filter(t => {
+        const ms = !s || t.name.toLowerCase().includes(s) || t.id.includes(s) || (t.description.desc || '').toLowerCase().includes(s);
+        const mc = !c || t.description.category === c;
+        const md = !d || t.description.difficulty === d;
+        return ms && mc && md;
+    });
+    renderProblems();
+}
+
+// ===================================================================
+//  Render Problem Cards
+// ===================================================================
+function renderProblems() {
+    const grid = document.getElementById('problemsGrid');
+    if (!filteredTasks.length) {
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500"><p class="text-lg mb-2">没有找到匹配的题目</p><p class="text-sm">请尝试调整搜索条件</p></div>';
+        return;
+    }
+    grid.innerHTML = filteredTasks.map(task => {
+        const desc = task.description;
+        const dc = 'badge-' + (desc.difficulty || 'basic');
+        const dtH = (desc.dtype && desc.dtype.length) ? desc.dtype.map(d => `<span class="badge-dtype text-xs px-2 py-0.5 rounded-full">${d}</span>`).join(' ') : '';
+        const rd = resultsMap[task.id];
+        let resultSummary = '';
+        if (rd && rd.results && rd.results.length) {
+            const sorted = [...rd.results].sort((a, b) => b.score - a.score);
+            const top = sorted[0];
+            resultSummary = `
+                <div class="flex items-center justify-between mt-3 pt-3" style="border-top:1px solid rgba(75,85,99,0.2);">
+                    <div class="text-xs text-gray-500"><span class="text-blue-400 font-medium">${rd.results.length}</span> 提交</div>
+                    <div class="text-xs"><span class="text-gray-500">Top:</span><span class="text-green-400 font-mono font-medium ml-1">${top.score.toFixed(4)}</span><span class="text-gray-500 ml-1">by</span><span class="text-white ml-1">${esc(top.user)}</span></div>
+                </div>`;
+        } else {
+            resultSummary = `<div class="mt-3 pt-3 text-xs text-gray-600" style="border-top:1px solid rgba(75,85,99,0.2);">暂无提交</div>`;
+        }
+        return `
+        <div class="task-card glass-card rounded-xl p-5 cursor-pointer" onclick="openTaskDetail('${task.id}')">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex-1 min-w-0">
+                    <div class="text-xs text-gray-500 mb-1">#${task.id}</div>
+                    <h3 class="text-sm font-semibold text-white truncate" title="${task.name}">${task.name}</h3>
                 </div>
-            `).join('');
-        }
+                <span class="${dc} text-xs px-2.5 py-1 rounded-full font-medium ml-2 flex-shrink-0">${desc.difficulty || 'N/A'}</span>
+            </div>
+            <p class="text-xs text-gray-400 mb-3 line-clamp-2">${esc(desc.desc || '暂无描述')}</p>
+            <div class="flex items-center flex-wrap gap-2">
+                ${desc.category ? `<span class="badge-category text-xs px-2 py-0.5 rounded-full">${desc.category}</span>` : ''}
+                ${desc.source ? `<span class="badge-source text-xs px-2 py-0.5 rounded-full">${desc.source}</span>` : ''}
+                ${dtH}
+            </div>
+            ${resultSummary}
+        </div>`;
+    }).join('');
+}
 
-        function renderGlobalLeaderboard() {
-            const container = document.getElementById('global-lb-body');
-            const teamCounts = {};
+// ===================================================================
+//  Task Detail Panel
+// ===================================================================
+function openTaskDetail(taskId) {
+    const task = tasksData.find(t => t.id === taskId);
+    if (!task) return;
+    currentTaskId = taskId;
+    const desc = task.description;
+    const modal   = document.getElementById('taskDetailModal');
+    const panel   = document.getElementById('detailPanel');
+    const content = document.getElementById('taskDetailContent');
 
-            container.innerHTML = db.tasks.map(task => {
-                const top = task.results?.[0] || { github: 'N/A', score: 0 };
-                if (top.github !== 'N/A') {
-                    teamCounts[top.github] = (teamCounts[top.github] || 0) + 1;
-                }
-                return `
-                    <tr class="hover:bg-blue-50 cursor-pointer transition-colors" onclick="showTaskDetail('${task.id}', 'leaderboard')">
-                        <td class="px-6 py-5 font-bold text-blue-700 text-sm">${task.name}</td>
-                        <td class="px-6 py-5 text-sm font-medium text-gray-600">@${top.github}</td>
-                        <td class="px-6 py-5 text-right font-mono font-bold text-gray-900">${Number(top.score).toFixed(6)}</td>
-                    </tr>
-                `;
-            }).join('');
+    const metas = [];
+    if (desc.category)   metas.push({ l:'Category',   v:desc.category,   c:'badge-category' });
+    if (desc.difficulty)  metas.push({ l:'Difficulty', v:desc.difficulty, c:'badge-'+(desc.difficulty||'basic') });
+    if (desc.source)     metas.push({ l:'Source',     v:desc.source,     c:'badge-source' });
+    const metaHtml = metas.map(m => `
+        <div class="flex flex-col items-center p-3 rounded-lg" style="background:rgba(17,24,39,0.5);">
+            <span class="text-xs text-gray-500 mb-1.5">${m.l}</span>
+            <span class="${m.c} text-xs px-3 py-1 rounded-full font-medium">${m.v}</span>
+        </div>`).join('');
 
-            // 统计数据处理
-            teamStatsData = Object.entries(teamCounts)
-                .map(([name, count]) => ({ name, count }))
-                .sort((a, b) => b.count - a.count);
+    const dtypeHtml = (desc.dtype && desc.dtype.length) ? `
+        <div class="detail-section">
+            <div class="detail-section-title">Data Types (dtype)</div>
+            <div class="flex flex-wrap gap-2">${desc.dtype.map(d => `<span class="badge-dtype text-sm px-3 py-1 rounded-full font-medium">${d}</span>`).join('')}</div>
+        </div>` : '';
 
-            renderTeamStats(teamStatsData);
-        }
+    const inputHtml = desc.input ? `<div class="detail-section"><div class="detail-section-title">Input Specification</div><p class="text-sm text-gray-300 leading-relaxed">${fmtDesc(desc.input)}</p></div>` : '';
+    const outputHtml = desc.output ? `<div class="detail-section"><div class="detail-section-title">Output Specification</div><p class="text-sm text-gray-300 leading-relaxed">${fmtDesc(desc.output)}</p></div>` : '';
+    const workloadHtml = desc.workload ? `<div class="detail-section"><div class="detail-section-title">Workload</div><p class="text-sm text-gray-300 leading-relaxed">${fmtDesc(desc.workload)}</p></div>` : '';
 
-        function renderTeamStats(data) {
-            const list = document.getElementById('team-stats-list');
-            list.className = "h-[450px] overflow-y-auto custom-scrollbar bg-gray-100/50 rounded-xl m-4 p-2 space-y-2";
-            
-            if (data.length === 0) {
-                list.innerHTML = `<p class="text-gray-400 text-[10px] py-4 text-center">No teams found</p>`;
-                return;
-            }
-            
-            list.innerHTML = data.map((team, idx) => `
-                <div class="py-3 px-4 flex items-center justify-between group bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all">
-                    <div class="flex items-center gap-4">
-                        <span class="text-xs font-mono text-gray-300 w-6">#${idx + 1}</span>
-                        <span class="text-sm font-bold text-gray-700 group-hover:text-blue-600 transition-colors cursor-default">@${team.name}</span>
-                    </div>
-                    <span class="text-xs font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">${team.count} Tasks</span>
-                </div>
-            `).join('');
-        }
+    const refHtml = task.reference_implementation ? `
+        <div class="detail-section" style="padding-bottom:0; overflow:hidden;">
+            <div class="flex items-center justify-between mb-3">
+                <div class="detail-section-title" style="margin-bottom:0;">Reference Implementation</div>
+                <button onclick="copyRef()" class="text-xs text-gray-500 hover:text-blue-400 transition-colors px-3 py-1 rounded-md" style="background:rgba(75,85,99,0.2);" id="copyBtn">📋 Copy</button>
+            </div>
+            <div class="code-block overflow-x-auto" style="margin:0 -20px -1px; border-radius:0 0 12px 12px; border-top:1px solid rgba(75,85,99,0.3); border-left:none; border-right:none; border-bottom:none;">
+                <pre class="p-4 text-sm leading-relaxed" style="font-family:'JetBrains Mono',monospace; color:#c9d1d9; margin:0; overflow-x:auto;"><code>${hlPy(task.reference_implementation)}</code></pre>
+            </div>
+        </div>` : '';
 
-        function filterTeams() {
-            const query = document.getElementById('team-search').value.toLowerCase();
-            const filtered = teamStatsData.filter(t => t.name.toLowerCase().includes(query));
-            renderTeamStats(filtered);
-        }
+    const rd = resultsMap[taskId];
+    let leaderboardHtml = '';
+    if (rd && rd.results && rd.results.length) {
+        const sorted = [...rd.results].sort((a, b) => b.score - a.score);
+        const rowsHtml = sorted.map((r, i) => {
+            const rank = r.rank || (i + 1);
+            const rankCls = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+            const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `<span class="text-gray-500">${rank}</span>`;
+            return `<tr>
+                <td class="${rankCls} text-center">${medal}</td>
+                <td><div class="flex items-center space-x-2">
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;">${r.user.charAt(0).toUpperCase()}</div>
+                    <div><div class="text-white text-sm font-medium">${esc(r.user)}</div>${r.github ? `<div class="text-gray-500 text-xs">@${esc(r.github)}</div>` : ''}</div>
+                </div></td>
+                <td><span class="text-green-400 font-mono font-semibold">${r.score.toFixed(6)}</span></td>
+                <td class="text-gray-400 font-mono text-sm">${r.latency || '—'}</td>
+                <td class="text-gray-500 text-xs">${r.date || '—'}</td>
+            </tr>`;
+        }).join('');
+        leaderboardHtml = `
+        <div class="detail-section" style="padding-bottom:0; overflow:hidden;">
+            <div class="flex items-center justify-between mb-3">
+                <div class="detail-section-title" style="margin-bottom:0;">🏆 Leaderboard</div>
+                <span class="text-xs text-gray-500">${rd.last_updated ? '更新: '+rd.last_updated : ''} · ${sorted.length} 条记录</span>
+            </div>
+            <div class="overflow-x-auto" style="margin:0 -20px -1px;">
+                <table class="result-table">
+                    <thead><tr><th class="text-center" style="width:50px;">Rank</th><th>User</th><th>Score</th><th>Latency</th><th>Date</th></tr></thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            </div>
+        </div>`;
+    } else {
+        leaderboardHtml = `<div class="detail-section"><div class="detail-section-title">🏆 Leaderboard</div><p class="text-gray-500 text-sm text-center py-6">暂无提交记录</p></div>`;
+    }
 
-        function renderProblemList() {
-            document.getElementById('problem-list').innerHTML = db.tasks.map(task => `
-                <div class="card p-4 hover:border-blue-400 cursor-pointer transition-all group" onclick="showTaskDetail('${task.id}', 'info')">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-lg font-bold text-gray-800 group-hover:text-blue-600">${task.name}</h3>
-                        <span class="text-xs font-mono text-gray-400">#${task.id}</span>
-                    </div>
-                    <p class="text-gray-500 text-sm mt-1 line-clamp-1">${task.description.workload}</p>
-                </div>
-            `).join('');
-        }
+    content.innerHTML = `
+        <div class="flex items-center mb-6">
+            <button onclick="closeTaskDetail()" class="mr-4 p-2 rounded-lg hover:bg-gray-800 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="flex-1 min-w-0">
+                <div class="text-xs text-gray-500 mb-0.5">Task #${task.id}</div>
+                <h2 class="text-xl font-bold text-white truncate">${task.name}</h2>
+            </div>
+        </div>
+        ${metas.length ? `<div class="grid grid-cols-3 gap-3 mb-6">${metaHtml}</div>` : ''}
+        <div class="detail-section"><div class="detail-section-title">Description</div><p class="text-sm text-gray-300 leading-relaxed">${fmtDesc(desc.desc || '暂无描述')}</p></div>
+        ${dtypeHtml}${inputHtml}${outputHtml}${workloadHtml}
+        ${leaderboardHtml}
+        ${refHtml}
+    `;
 
-        function showTaskDetail(taskId, subView = 'info') {
-            const task = db.tasks.find(t => t.id === taskId);
-            if (!task) return showView('home');
+    modal.classList.remove('hidden');
+    panel.style.transform = 'translateX(100%)';
+    requestAnimationFrame(() => { panel.style.transition = 'transform .3s ease'; panel.style.transform = 'translateX(0)'; });
+}
 
-            showView('task-detail');
-            window.history.pushState({}, '', `?task=${taskId}`);
+function closeTaskDetail() {
+    const modal = document.getElementById('taskDetailModal');
+    const panel = document.getElementById('detailPanel');
+    panel.style.transform = 'translateX(100%)';
+    setTimeout(() => { modal.classList.add('hidden'); panel.style.transition = ''; }, 300);
+}
 
-            const content = document.getElementById('task-detail-content');
-            content.innerHTML = `
-                <nav class="flex gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 mb-8">
-                    <a href="javascript:void(0)" onclick="showView('leaderboard')" class="hover:text-blue-600">Leaderboard</a>
-                    <span>/</span>
-                    <span class="text-gray-900">${task.name}</span>
-                </nav>
-                
-                <h1 class="text-3xl font-black mb-8 tracking-tight">${task.name}</h1>
-
-                <div class="flex gap-8 border-b border-gray-100 mb-8">
-                    <button onclick="toggleSubView('info')" id="btn-info" class="pb-4 border-b-2 font-bold text-sm tracking-widest uppercase transition-all ${subView==='info'?'border-blue-600 text-blue-600':'border-transparent text-gray-400'}">Description</button>
-                    <button onclick="toggleSubView('lb')" id="btn-lb" class="pb-4 border-b-2 font-bold text-sm tracking-widest uppercase transition-all ${subView==='leaderboard'?'border-blue-600 text-blue-600':'border-transparent text-gray-400'}">Leaderboard</button>
-                </div>
-
-                <div id="sub-info" class="${subView==='info'?'':'hidden'} space-y-8">
-                    <div class="card p-8">
-                        <div class="grid md:grid-cols-2 gap-12">
-                            <div>
-                                <p class="stat-label mb-3">Input Tensors</p>
-                                <code class="block bg-gray-50 p-3 rounded text-sm border border-gray-100">${task.description.input}</code>
-                            </div>
-                            <div>
-                                <p class="stat-label mb-3">Output Tensors</p>
-                                <code class="block bg-gray-50 p-3 rounded text-sm border border-gray-100">${task.description.output}</code>
-                            </div>
-                        </div>
-                        <div class="mt-8">
-                            <p class="stat-label mb-3">Optimization Target</p>
-                            <p class="text-gray-700 leading-relaxed">${task.description.workload}</p>
-                        </div>
-                    </div>
-                    <div class="card p-8">
-                        <div class="flex justify-between items-center mb-6">
-                            <h4 class="stat-label">Reference Kernel</h4>
-                            <button onclick="copyCode()" class="text-[10px] bg-gray-900 text-white px-4 py-1.5 rounded-full font-bold hover:bg-blue-600 transition-colors">COPY_CODE</button>
-                        </div>
-                        <pre><code id="code-block">${escapeHtml(task.reference_implementation)}</code></pre>
-                    </div>
-                </div>
-
-                <div id="sub-lb" class="${subView==='leaderboard'?'':'hidden'}">
-                    <div class="card overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-gray-50 border-b border-gray-200">
-                                <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                    <th class="px-6 py-4">Rank</th>
-                                    <th class="px-6 py-4">User</th>
-                                    <th class="px-6 py-4">Score</th>
-                                    <th class="px-6 py-4">Latency</th>
-                                    <th class="px-6 py-4 text-right">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                ${task.results.map(r => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 font-black text-gray-300">#${r.rank}</td>
-                                        <td class="px-6 py-4 font-bold text-blue-600 text-sm">@${r.github}</td>
-                                        <td class="px-6 py-4 font-mono font-bold text-sm">${Number(r.score).toFixed(6)}</td>
-                                        <td class="px-6 py-4 text-xs font-mono text-gray-500">${r.latency}</td>
-                                        <td class="px-6 py-4 text-right text-[10px] font-mono text-gray-400">${r.date}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-        }
-
-        function toggleSubView(type) {
-            const isInfo = type === 'info';
-            document.getElementById('sub-info').classList.toggle('hidden', !isInfo);
-            document.getElementById('sub-lb').classList.toggle('hidden', isInfo);
-            document.getElementById('btn-info').className = isInfo ? "pb-4 border-b-2 border-blue-600 text-blue-600 font-bold text-sm tracking-widest uppercase transition-all" : "pb-4 border-b-2 border-transparent text-gray-400 font-bold text-sm tracking-widest uppercase transition-all";
-            document.getElementById('btn-lb').className = !isInfo ? "pb-4 border-b-2 border-blue-600 text-blue-600 font-bold text-sm tracking-widest uppercase transition-all" : "pb-4 border-b-2 border-transparent text-gray-400 font-bold text-sm tracking-widest uppercase transition-all";
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function copyCode() {
-            const code = document.getElementById('code-block').textContent;
-            navigator.clipboard.writeText(code).then(() => {
-                const btn = document.querySelector('[onclick="copyCode()"]');
-                btn.innerText = 'COPIED!';
-                btn.classList.add('bg-green-600');
-                setTimeout(() => { btn.innerText = 'COPY_CODE'; btn.classList.remove('bg-green-600'); }, 1500);
-            });
-        }
-
-        window.onload = init;
-    </script>
+// ===================================================================
+//  Utility
+// ===================================================================
+function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+function fmtDesc(d) {
+    return esc(d).replace(/`([^`]+)`/g,
+        '<code style="background:rgba(96,165,250,0.1);color:#93c5fd;padding:2px 6px;border-radius:4px;font-family:\'JetBrains Mono\',monospace;font-size:.85em;">$1</code>');
+}
+function hlPy(code) {
+    let s = esc(code);
+    s = s.replace(/("""[\s\S]*?"""|'''[\s\S]*?'''|"[^"\n]*"|'[^'\n]*')/g, '<span style="color:#a5d6ff;">$1</span>');
+    s = s.replace(/(#.*?)(\n|$)/g, '<span style="color:#8b949e;">$1</span>$2');
+    const kw = ['import','from','class','def','return','self','super','if','else','elif','for','while','in','not','and','or','True','False','None','as','with','try','except','finally','raise','pass','break','continue','lambda','yield','assert'];
+    kw.forEach(k => { s = s.replace(new RegExp('\\b('+k+')\\b','g'), '<span style="color:#ff7b72;">$1</span>'); });
+    s = s.replace(/\b(\d+\.?\d*)\b/g, '<span style="color:#79c0ff;">$1</span>');
+    return s;
+}
+function copyRef() {
+    const task = tasksData.find(t => t.id === currentTaskId);
+    if (!task) return;
+    const btn = document.getElementById('copyBtn');
+    navigator.clipboard.writeText(task.reference_implementation).then(() => {
+        btn.textContent = '✅ Copied!'; setTimeout(() => btn.textContent = '📋 Copy', 2000);
+    }).catch(() => { btn.textContent = '❌ Failed'; setTimeout(() => btn.textContent = '📋 Copy', 2000); });
+}
+function switchNav(sec) {
+    document.querySelectorAll('.nav-link').forEach(el => { el.classList.remove('active'); el.classList.add('text-gray-400'); });
+    const t = document.querySelector(`.nav-link[data-nav="${sec}"]`);
+    if (t) { t.classList.add('active'); t.classList.remove('text-gray-400'); }
+}
+function showMainView() { closeTaskDetail(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTaskDetail(); });
+document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>

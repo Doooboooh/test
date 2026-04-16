@@ -1,0 +1,16 @@
+{
+  "task_id": "003",
+  "last_updated": "2026-04-13",
+  "results": [
+        {"rank": 1, "user": "GraphMaster", "github": "g_master", "score": 0.452210, "latency": "0.890ms", "date": "2026-04-10"},
+        {"rank": 2, "user": "SparseKing", "github": "s_king", "score": 0.441120, "latency": "0.912ms", "date": "2026-04-08"},
+        {"rank": 3, "user": "DataHacker", "github": "d_hacker", "score": 0.430011, "latency": "0.930ms", "date": "2026-04-05"},
+        {"rank": 4, "user": "CudaWarrior", "github": "c_warrior", "score": 0.412231, "latency": "0.950ms", "date": "2026-04-02"},
+        {"rank": 5, "user": "ParallelCoder", "github": "p_coder", "score": 0.392211, "latency": "0.980ms", "date": "2026-03-30"},
+        {"rank": 6, "user": "MathWhiz", "github": "m_whiz", "score": 0.371120, "latency": "1.020ms", "date": "2026-03-25"},
+        {"rank": 7, "user": "LogicStream", "github": "l_stream", "score": 0.352211, "latency": "1.050ms", "date": "2026-03-20"},
+        {"rank": 8, "user": "NodeRunner", "github": "n_runner", "score": 0.320011, "latency": "1.100ms", "date": "2026-03-15"},
+        {"rank": 9, "user": "BigO_Labs", "github": "big_o", "score": 0.292211, "latency": "1.200ms", "date": "2026-03-10"},
+        {"rank": 10, "user": "EasyCompute", "github": "easy_c", "score": 0.250000, "latency": "1.500ms", "date": "2026-03-01"}
+    ]
+}
